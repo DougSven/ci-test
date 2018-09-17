@@ -1,0 +1,24 @@
+deps:
+  tags:
+    - streleng
+  stage: deps
+  script:
+    - mkdir ~/.ssh && chmod 700 ~/.ssh
+    - echo $GITHUB_KEY | base64 --decode > ~/.ssh/github && chmod 600 ~/.ssh/github
+    - printf "Host github.com\n  User git\n  IdentityFile ~/.ssh/github\n  StrictHostKeyChecking no" >> ~/.ssh/config
+    - pip install --upgrade virtualenv
+    - virtualenv --no-site-packages build/venv
+    - source build/venv/bin/activate
+    - pip install --upgrade pip
+    - pip download -r helloworld-web/pkg/ansible/requirements.txt -d helloworld-web/build/pip
+    - pip install -r helloworld-web/pkg/ansible/requirements.txt --no-index --upgrade --find-links=helloworld-web/build/pip
+    - ansible-galaxy install -r helloworld-web/pkg/ansible/roles.yml -p helloworld-web/build/ansible/roles
+    - deactivate
+  artifacts:
+    paths:
+      - helloworld-web/build/ansible/roles
+      - helloworld-web/build/pip
+    expire_in: 1 day
+  only:
+    - /(master|release)/@iot/releng/helloworld
+
